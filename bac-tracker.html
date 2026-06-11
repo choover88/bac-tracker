@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sip Smart · BAC Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#a83086;
+    --plum-soft:#b992b1;
+    --plum-deep:#856089;
+    --pink-pale:#f2e0ed;
+    --pink-soft:#e0bad0;
+    --teal-deep:#085164;
+    --teal:#62a6b9;
+    --teal-soft:#67989c;
+    --teal-pale:#c0e0e3;
+    --navy:#373c58;
+    --navy-deep:#232b38;
+    --ink:#231f20;
+    --slate:#6a7d93;
+    --sage:#adbab7;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(160deg,var(--pink-pale) 0%,var(--teal-pale) 100%);
+    color:var(--navy-deep);
+    min-height:100vh;
+    padding:32px 16px 64px;
+  }
+  h1,h2,h3{font-family:'Safira March','Cormorant Garamond',serif;font-weight:600;color:var(--navy);letter-spacing:.5px}
+  .wrap{max-width:880px;margin:0 auto}
+  header{text-align:center;margin-bottom:28px}
+  header h1{font-size:2.8rem;color:var(--plum)}
+  header p{font-size:.85rem;color:var(--slate);max-width:560px;margin:8px auto 0;line-height:1.5}
+
+  .card{
+    background:var(--white);
+    border-radius:18px;
+    padding:24px 26px;
+    box-shadow:0 8px 28px rgba(55,60,88,.10);
+    margin-bottom:22px;
+  }
+  .card h2{font-size:1.5rem;margin-bottom:14px;border-bottom:2px solid var(--pink-soft);padding-bottom:8px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--teal-deep);display:block;margin-bottom:5px}
+  input,select{
+    width:100%;
+    font-family:'Poppins',sans-serif;
+    font-size:.9rem;
+    padding:10px 12px;
+    border:1.5px solid var(--sage);
+    border-radius:10px;
+    background:#fdfbfd;
+    color:var(--navy-deep);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--plum);box-shadow:0 0 0 3px rgba(168,48,134,.15)}
+
+  .btn{
+    font-family:'Poppins',sans-serif;
+    font-weight:600;font-size:.85rem;
+    padding:11px 22px;
+    border:none;border-radius:999px;
+    cursor:pointer;
+    transition:transform .12s, box-shadow .12s, background .15s;
+  }
+  .btn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:var(--plum);color:var(--white);box-shadow:0 4px 14px rgba(168,48,134,.35)}
+  .btn-primary:hover{background:#8f2a72}
+  .btn-teal{background:var(--teal-deep);color:var(--white)}
+  .btn-teal:hover{background:#0a6a82}
+  .btn-ghost{background:transparent;color:var(--plum-deep);border:1.5px solid var(--plum-soft)}
+  .btn-ghost:hover{background:var(--pink-pale)}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+  /* ---- BAC readout ---- */
+  .readout{
+    text-align:center;
+    background:linear-gradient(150deg,var(--navy) 0%,var(--navy-deep) 70%);
+    color:var(--white);
+    border-radius:18px;
+    padding:30px 24px 26px;
+    margin-bottom:22px;
+    box-shadow:0 10px 32px rgba(35,43,56,.35);
+  }
+  .readout h2{color:var(--teal-pale);font-size:1.3rem;border:none;padding:0;margin-bottom:4px}
+  .bac-number{
+    font-family:'Safira March','Cormorant Garamond',serif;
+    font-size:4.6rem;font-weight:700;line-height:1;
+    background:linear-gradient(90deg,var(--teal) 0%,var(--pink-soft) 60%,var(--plum) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .bac-unit{font-size:.8rem;color:var(--plum-soft);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+  .zone-label{font-size:1rem;font-weight:600;margin-top:14px}
+  .zone-sub{font-size:.78rem;color:var(--teal-pale);margin-top:4px}
+
+  .gauge{
+    position:relative;height:14px;border-radius:999px;margin:22px auto 6px;max-width:520px;
+    background:linear-gradient(90deg,var(--teal) 0%,var(--teal-soft) 25%,var(--pink-soft) 50%,var(--plum) 75%,var(--plum-deep) 100%);
+  }
+  .gauge-marker{
+    position:absolute;top:-6px;width:4px;height:26px;border-radius:4px;
+    background:var(--white);box-shadow:0 0 8px rgba(255,255,255,.8);
+    transition:left .6s ease;
+  }
+  .gauge-ticks{display:flex;justify-content:space-between;max-width:520px;margin:4px auto 0;font-size:.65rem;color:var(--slate)}
+  .readout .gauge-ticks{color:var(--teal-pale)}
+  .zero-time{font-size:.8rem;margin-top:16px;color:var(--pink-soft)}
+
+  /* ---- drink list ---- */
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--teal-deep);text-align:left;padding:8px 10px;border-bottom:2px solid var(--teal-pale)}
+  td{padding:10px;border-bottom:1px solid var(--pink-pale)}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:600}
+  .pill-active{background:var(--pink-pale);color:var(--plum)}
+  .pill-done{background:var(--teal-pale);color:var(--teal-deep)}
+  .remove{background:none;border:none;color:var(--slate);cursor:pointer;font-size:1rem;padding:4px}
+  .remove:hover{color:var(--plum)}
+  .empty{text-align:center;color:var(--slate);font-size:.85rem;padding:18px 0}
+
+  .disclaimer{
+    background:var(--pink-pale);
+    border-left:4px solid var(--plum);
+    border-radius:0 12px 12px 0;
+    padding:14px 18px;
+    font-size:.76rem;line-height:1.6;color:var(--navy);
+  }
+  .disclaimer strong{color:var(--plum)}
+  .hidden{display:none}
+  .profile-summary{font-size:.82rem;color:var(--slate);margin-bottom:10px}
+  .profile-summary b{color:var(--teal-deep)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media (max-width:560px){
+    .bac-number{font-size:3.4rem}
+    header h1{font-size:2.1rem}
+    table{font-size:.75rem}
+    td,th{padding:7px 5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Sip Smart</h1>
+    <p>A personal blood alcohol estimator. Set up your profile once, log each drink as you start and finish it, and watch your estimated BAC update in real time.</p>
+  </header>
+
+  <!-- ===== PROFILE ===== -->
+  <section class="card" id="profileCard">
+    <h2>Your Profile</h2>
+    <div id="profileForm">
+      <div class="grid">
+        <div>
+          <label for="sex">Sex (for body water est.)</label>
+          <select id="sex">
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </div>
+        <div>
+          <label for="weight">Weight</label>
+          <input type="number" id="weight" min="60" max="500" placeholder="e.g. 150">
+        </div>
+        <div>
+          <label for="weightUnit">Weight unit</label>
+          <select id="weightUnit"><option value="lb">lb</option><option value="kg">kg</option></select>
+        </div>
+        <div>
+          <label for="heightFt">Height</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="heightFt" min="3" max="7" placeholder="ft" aria-label="feet">
+            <input type="number" id="heightIn" min="0" max="11" placeholder="in" aria-label="inches">
+          </div>
+        </div>
+        <div>
+          <label for="age">Age</label>
+          <input type="number" id="age" min="21" max="110" placeholder="e.g. 30">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
+      </div>
+    </div>
+    <div id="profileSaved" class="hidden">
+      <p class="profile-summary" id="profileSummary"></p>
+      <button class="btn btn-ghost" onclick="editProfile()">Edit profile</button>
+    </div>
+  </section>
+
+  <!-- ===== READOUT ===== -->
+  <section class="readout" aria-live="polite">
+    <h2>Estimated BAC right now</h2>
+    <div class="bac-number" id="bacNumber">0.000</div>
+    <div class="bac-unit">grams per 100 mL · %</div>
+    <div class="gauge"><div class="gauge-marker" id="gaugeMarker" style="left:0%"></div></div>
+    <div class="gauge-ticks"><span>0.00</span><span>0.05</span><span>0.08</span><span>0.12</span><span>0.16+</span></div>
+    <div class="zone-label" id="zoneLabel">Nothing logged yet</div>
+    <div class="zone-sub" id="zoneSub">Save your profile and add a drink to begin.</div>
+    <div class="zero-time" id="zeroTime"></div>
+  </section>
+
+  <!-- ===== ADD DRINK ===== -->
+  <section class="card">
+    <h2>Log a Drink</h2>
+    <div class="grid">
+      <div>
+        <label for="drinkName">Drink</label>
+        <input type="text" id="drinkName" placeholder="e.g. IPA, margarita">
+      </div>
+      <div>
+        <label for="drinkVol">Size (fl oz)</label>
+        <input type="number" id="drinkVol" min="0.5" max="64" step="0.5" placeholder="12">
+      </div>
+      <div>
+        <label for="drinkAbv">Alcohol %</label>
+        <input type="number" id="drinkAbv" min="0.1" max="95" step="0.1" placeholder="5.0">
+      </div>
+      <div>
+        <label for="startTime">Started at</label>
+        <input type="time" id="startTime">
+      </div>
+      <div>
+        <label for="endTime">Finished at (optional)</label>
+        <input type="time" id="endTime">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-teal" onclick="startNow()">Start one now</button>
+      <button class="btn btn-primary" onclick="addDrink()">Add drink</button>
+    </div>
+    <p style="font-size:.72rem;color:var(--slate);margin-top:10px">Quick reference: beer 12 oz at 5% · wine 5 oz at 12% · liquor shot 1.5 oz at 40%. Leave "finished" blank for a drink in progress, then mark it done from the list.</p>
+  </section>
+
+  <!-- ===== DRINK LIST ===== -->
+  <section class="card">
+    <h2>Tonight's Drinks</h2>
+    <div id="drinkTableWrap"><p class="empty">No drinks logged yet.</p></div>
+  </section>
+
+  <p class="disclaimer">
+    <strong>Please read:</strong> This is a rough mathematical estimate (Widmark/Watson method), not a measurement. Real BAC varies with food, medications, hydration, hormones, and individual metabolism, and it can keep rising after your last sip. <strong>Never use this tool to decide whether you're okay to drive</strong> — the only safe driving BAC is 0.00 with a planned ride. Data lives only on this page and clears if you refresh.
+  </p>
+</div>
+
+<script>
+let profile = null;
+let drinks = [];
+const ML_PER_OZ = 29.5735;
+const ETHANOL_DENSITY = 0.789;       // g/mL
+const ELIMINATION = 0.015;           // % per hour
+const BLOOD_WATER = 0.806;
+
+function saveProfile(){
+  const sex = document.getElementById('sex').value;
+  const w = parseFloat(document.getElementById('weight').value);
+  const unit = document.getElementById('weightUnit').value;
+  const ft = parseFloat(document.getElementById('heightFt').value);
+  const inch = parseFloat(document.getElementById('heightIn').value) || 0;
+  const age = parseFloat(document.getElementById('age').value);
+  if(!w || w <= 0){ alert('Please enter your weight — it has the biggest effect on the estimate.'); return; }
+  const kg = unit === 'lb' ? w * 0.453592 : w;
+  const cm = (ft ? ft*30.48 + inch*2.54 : null);
+  profile = { sex, kg, cm, age: age || null, displayW: w + ' ' + unit,
+              displayH: ft ? ft + "'" + inch + '"' : null };
+  document.getElementById('profileForm').classList.add('hidden');
+  document.getElementById('profileSaved').classList.remove('hidden');
+  document.getElementById('profileSummary').innerHTML =
+    'Calculating for: <b>' + sex + '</b>, <b>' + profile.displayW + '</b>' +
+    (profile.displayH ? ', <b>' + profile.displayH + '</b>' : '') +
+    (profile.age ? ', <b>age ' + profile.age + '</b>' : '') +
+    (profile.cm && profile.age ? ' — using the Watson body-water formula for extra accuracy.' :
+     ' — add height &amp; age for a more personalized estimate.');
+  render();
+}
+function editProfile(){
+  document.getElementById('profileForm').classList.remove('hidden');
+  document.getElementById('profileSaved').classList.add('hidden');
+}
+
+// Total body water in liters (Watson if height+age available, else Widmark r)
+function bodyWaterL(){
+  const p = profile;
+  if(p.cm && p.age){
+    return p.sex === 'male'
+      ? 2.447 - 0.09516*p.age + 0.1074*p.cm + 0.3362*p.kg
+      : -2.097 + 0.1069*p.cm + 0.2466*p.kg;
+  }
+  const r = p.sex === 'male' ? 0.68 : 0.55;
+  return r * p.kg; // liters-equivalent for Widmark form
+}
+
+function timeToDate(t){
+  if(!t) return null;
+  const [h,m] = t.split(':').map(Number);
+  const d = new Date(); d.setHours(h,m,0,0);
+  // if the time is more than 12h in the future, assume it was earlier today/yesterday
+  if(d - new Date() > 12*3600*1000) d.setDate(d.getDate()-1);
+  return d;
+}
+function fmt(d){ return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+
+function startNow(){
+  const now = new Date();
+  document.getElementById('startTime').value =
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+function addDrink(){
+  if(!profile){ alert('Save your profile first so the math is about you!'); return; }
+  const name = document.getElementById('drinkName').value || 'Drink ' + (drinks.length+1);
+  const vol = parseFloat(document.getElementById('drinkVol').value);
+  const abv = parseFloat(document.getElementById('drinkAbv').value);
+  const start = timeToDate(document.getElementById('startTime').value);
+  const end = timeToDate(document.getElementById('endTime').value);
+  if(!vol || !abv || !start){ alert('Size, alcohol %, and a start time are needed.'); return; }
+  if(end && end < start){ alert('Finish time is before start time.'); return; }
+  const grams = vol * ML_PER_OZ * (abv/100) * ETHANOL_DENSITY;
+  drinks.push({ name, vol, abv, grams, start, end });
+  ['drinkName','drinkVol','drinkAbv','startTime','endTime'].forEach(id => document.getElementById(id).value = '');
+  render();
+}
+
+function finishDrink(i){ drinks[i].end = new Date(); render(); }
+function removeDrink(i){ drinks.splice(i,1); render(); }
+
+// Absorbed grams at time t, spread linearly across sipping window
+function absorbedGrams(d, t){
+  if(t <= d.start) return 0;
+  const end = d.end || t;                       // still sipping: count up to now
+  const span = Math.max((end - d.start), 60000); // min 1 minute
+  const frac = Math.min((t - d.start)/span, 1);
+  return d.grams * frac;
+}
+
+function bacAt(t){
+  if(!profile || drinks.length === 0) return 0;
+  const A = drinks.reduce((s,d) => s + absorbedGrams(d,t), 0);
+  const peak = (A * BLOOD_WATER) / (bodyWaterL() * 10); // g per 100 mL
+  const firstStart = Math.min(...drinks.map(d => d.start.getTime()));
+  const hours = Math.max((t - firstStart)/3600000, 0);
+  return Math.max(peak - ELIMINATION*hours, 0);
+}
+
+function zone(b){
+  if(b === 0)      return ['Sober · 0.00','All clear.'];
+  if(b < 0.03)     return ['Minimal','Subtle relaxation possible. Judgment already begins to soften.'];
+  if(b < 0.06)     return ['Mild impairment','Lowered inhibition, slower reaction time. Hydrate and pace yourself.'];
+  if(b < 0.08)     return ['Impaired','Coordination and judgment clearly affected. You may not feel it, but it\u2019s there.'];
+  if(b < 0.12)     return ['Over the legal limit','Significantly impaired. Time to switch to water and stay put.'];
+  if(b < 0.20)     return ['High','Serious impairment \u2014 nausea, poor balance, blackout risk. Stop drinking, eat, hydrate, stay with people.'];
+  return ['Danger zone','Risk of alcohol poisoning. Stop now. If anyone is unresponsive or vomiting while drowsy, call 911.'];
+}
+
+function render(){
+  const now = new Date();
+  const b = bacAt(now);
+  document.getElementById('bacNumber').textContent = b.toFixed(3);
+  const pct = Math.min(b/0.16, 1) * 100;
+  document.getElementById('gaugeMarker').style.left = 'calc(' + pct + '% - 2px)';
+  const [zl, zs] = drinks.length ? zone(b) : ['Nothing logged yet','Save your profile and add a drink to begin.'];
+  document.getElementById('zoneLabel').textContent = zl;
+  document.getElementById('zoneSub').textContent = zs;
+
+  // estimated time back to zero (search forward)
+  const zt = document.getElementById('zeroTime');
+  if(b > 0){
+    let t = new Date(now);
+    for(let i=0; i<48*60 && bacAt(t) > 0.0005; i++) t = new Date(t.getTime() + 60000);
+    zt.textContent = 'Estimated back to 0.000 around ' + fmt(t) + (t.getDate() !== now.getDate() ? ' (tomorrow)' : '');
+  } else zt.textContent = '';
+
+  // drink table
+  const wrap = document.getElementById('drinkTableWrap');
+  if(drinks.length === 0){ wrap.innerHTML = '<p class="empty">No drinks logged yet.</p>'; return; }
+  let html = '<table><thead><tr><th>Drink</th><th>Size</th><th>ABV</th><th>Started</th><th>Finished</th><th></th></tr></thead><tbody>';
+  drinks.forEach((d,i) => {
+    html += '<tr><td><b>'+d.name+'</b></td><td>'+d.vol+' oz</td><td>'+d.abv+'%</td><td>'+fmt(d.start)+'</td><td>'+
+      (d.end ? '<span class="pill pill-done">'+fmt(d.end)+'</span>'
+             : '<span class="pill pill-active">sipping</span> <button class="btn btn-ghost" style="padding:4px 12px;font-size:.7rem" onclick="finishDrink('+i+')">Done</button>')+
+      '</td><td><button class="remove" onclick="removeDrink('+i+')" aria-label="Remove drink">✕</button></td></tr>';
+  });
+  wrap.innerHTML = html + '</tbody></table>';
+}
+
+setInterval(render, 30000); // refresh estimate every 30s
+render();
+</script>
+</body>
+</html>
